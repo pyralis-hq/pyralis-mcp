@@ -1,0 +1,46 @@
+# Smithery MCP Server Configuration
+# https://smithery.ai/docs/registry/publishing
+
+name: pyralis-mcp
+displayName: "Pyralis — Ecommerce & Canadian Finance Tools"
+description: "Ecommerce SEO optimization, competitor price scanning, TSX stock quotes, and Canadian tax calculations (TFSA/RRSP/FHSA). Canadian-focused. No US bias."
+version: "0.1.0"
+license: MIT
+homepage: https://pyralis-mcp.netlify.app
+
+categories:
+  - ecommerce
+  - finance
+  - canada
+
+tags:
+  - ecommerce
+  - shopify
+  - etsy
+  - amazon
+  - seo
+  - tsx
+  - canada
+  - tax
+  - tfsa
+  - rrsp
+  - fhsa
+  - capital-gains
+  - competitor-analysis
+
+tools:
+  - name: optimize_listing
+    description: "SEO-optimize product listings for Shopify, Etsy, and Amazon"
+  - name: scan_competitor
+    description: "Scan competitor pricing across Amazon.ca, Etsy, Walmart.ca, Google Shopping"
+  - name: tsx_quote
+    description: "Real-time TSX stock quotes with RSI and momentum indicators"
+  - name: canadian_tax_calc
+    description: "2026 Canadian tax calculations: capital gains, marginal rates, TFSA/RRSP/FHSA limits"
+
+startCommand:
+  type: stdio
+  command: npx
+  args:
+    - tsx
+    - server.ts

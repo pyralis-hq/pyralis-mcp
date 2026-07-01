@@ -310,9 +310,11 @@ async function scrapeWalmart(productName: string, minPrice?: number, maxPrice?: 
     const listings: any[] = [];
     for (const item of rawItems) {
       const price = parseFloat(
-        item.priceMap?.CURRENT?.price ??
-        item.priceMap?.LIST?.price ??
-        item.price ??
+        item.price ||
+        item.priceInfo?.linePrice?.replace(/[^0-9.]/g, '') ||
+        item.priceInfo?.itemPrice?.replace(/[^0-9.]/g, '') ||
+        item.priceMap?.CURRENT?.price ||
+        item.priceMap?.LIST?.price ||
         '0'
       );
       if (price <= 0) continue;
