@@ -3,31 +3,79 @@
   "version": "0.1.0",
   "description": "Ecommerce and Canadian finance tools for AI agents. Optimize product listings, scan competitor pricing, get TSX quotes, and calculate Canadian taxes.",
   "transport": "streamable-http",
-  "url": "https://memphis-jerusalem-victory-jake.trycloudflare.com/mcp",
-  "health": "https://memphis-jerusalem-victory-jake.trycloudflare.com/health",
+  "url": "https://pyralis.store/mcp",
+  "health": "https://pyralis.store/health",
   "repository": "https://github.com/pyralis-hq/pyralis-mcp",
   "homepage": "https://pyralis-mcp.netlify.app",
-  "categories": ["ecommerce", "finance", "canadian", "seo", "tax"],
+  "categories": [
+    "ecommerce",
+    "finance",
+    "canadian",
+    "seo",
+    "tax"
+  ],
   "tools": [
     {
       "name": "optimize_listing",
       "description": "Optimize an ecommerce product listing for SEO. Returns optimized title, description, tags, and pricing suggestions. Supports Shopify, Etsy, Amazon.",
-      "keywords": ["seo", "product listing", "shopify", "etsy", "amazon", "ecommerce", "optimize", "title", "description", "tags"]
+      "keywords": [
+        "seo",
+        "product listing",
+        "shopify",
+        "etsy",
+        "amazon",
+        "ecommerce",
+        "optimize",
+        "title",
+        "description",
+        "tags"
+      ]
     },
     {
       "name": "scan_competitor",
       "description": "Scan competitor pricing for a product across Amazon, Etsy, Google Shopping, and Walmart. Returns live prices, ratings, and listing URLs.",
-      "keywords": ["competitor", "price", "pricing", "scan", "amazon", "etsy", "walmart", "google shopping", "marketplace"]
+      "keywords": [
+        "competitor",
+        "price",
+        "pricing",
+        "scan",
+        "amazon",
+        "etsy",
+        "walmart",
+        "google shopping",
+        "marketplace"
+      ]
     },
     {
       "name": "tsx_quote",
       "description": "Get real-time TSX stock quotes with RSI, volume, and day change. Covers 22+ TSX-listed stocks. Canadian market data.",
-      "keywords": ["tsx", "stock", "quote", "canadian", "finance", "rsi", "volume", "yahoo finance", "toronto"]
+      "keywords": [
+        "tsx",
+        "stock",
+        "quote",
+        "canadian",
+        "finance",
+        "rsi",
+        "volume",
+        "yahoo finance",
+        "toronto"
+      ]
     },
     {
       "name": "canadian_tax_calc",
       "description": "Calculate Canadian capital gains tax, marginal tax rates, and TFSA/RRSP/FHSA contribution limits. 2026 federal and provincial brackets.",
-      "keywords": ["tax", "canada", "capital gains", "marginal rate", "tfsa", "rrsp", "fhsa", "calculator", "cra", "provincial"]
+      "keywords": [
+        "tax",
+        "canada",
+        "capital gains",
+        "marginal rate",
+        "tfsa",
+        "rrsp",
+        "fhsa",
+        "calculator",
+        "cra",
+        "provincial"
+      ]
     }
   ],
   "capabilities": {
@@ -43,7 +91,7 @@
   },
   "links": {
     "github": "https://github.com/pyralis-hq/pyralis-mcp",
-    "homepage": "https://pyralis-mcp.netlify.app",
+    "homepage": "https://pyralis.store",
     "glama": "https://glama.ai/mcp/servers/@pyralis-hq/pyralis-mcp"
   }
 }

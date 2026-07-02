@@ -6,7 +6,7 @@ displayName: "Pyralis — Ecommerce & Canadian Finance Tools"
 description: "Ecommerce SEO optimization, competitor price scanning, TSX stock quotes, and Canadian tax calculations (TFSA/RRSP/FHSA). Canadian-focused. No US bias."
 version: "0.1.0"
 license: MIT
-homepage: https://pyralis-mcp.netlify.app
+homepage: https://pyralis.store
 
 categories:
   - ecommerce
