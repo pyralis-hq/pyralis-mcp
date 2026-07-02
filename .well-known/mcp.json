@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "description": "Ecommerce and Canadian finance tools for AI agents. Optimize product listings, scan competitor pricing, get TSX quotes, and calculate Canadian taxes.",
   "transport": "streamable-http",
-  "url": "https://pyralis.store/mcp",
-  "health": "https://pyralis.store/health",
+  "url": "https://memphis-jerusalem-victory-jake.trycloudflare.com/mcp",
+  "health": "https://memphis-jerusalem-victory-jake.trycloudflare.com/health",
+  "repository": "https://github.com/pyralis-hq/pyralis-mcp",
+  "homepage": "https://pyralis-mcp.netlify.app",
   "categories": ["ecommerce", "finance", "canadian", "seo", "tax"],
   "tools": [
     {
@@ -14,7 +16,7 @@
     },
     {
       "name": "scan_competitor",
-      "description": "Scan competitor pricing for a product across Amazon, Etsy, Google Shopping, and Walmart. Returns prices, ratings, and listing URLs.",
+      "description": "Scan competitor pricing for a product across Amazon, Etsy, Google Shopping, and Walmart. Returns live prices, ratings, and listing URLs.",
       "keywords": ["competitor", "price", "pricing", "scan", "amazon", "etsy", "walmart", "google shopping", "marketplace"]
     },
     {
@@ -40,8 +42,8 @@
     "note": "Free during beta. No key required. Per-call pricing coming soon."
   },
   "links": {
-    "homepage": "https://pyralis.store",
-    "docs": "https://pyralis.store/docs",
-    "install": "https://pyralis.store/install"
+    "github": "https://github.com/pyralis-hq/pyralis-mcp",
+    "homepage": "https://pyralis-mcp.netlify.app",
+    "glama": "https://glama.ai/mcp/servers/@pyralis-hq/pyralis-mcp"
   }
 }

@@ -224,6 +224,32 @@ async function scrapeWalmart(productName: string, minPrice?: number, maxPrice?: 
   }
 }
 
+function getPlatformTips(platform: string): string[] {
+  const tips: Record<string, string[]> = {
+    shopify: [
+      "Use 4-5 product photos with descriptive alt text containing target keywords",
+      "Set up automated abandoned cart recovery emails",
+      "Enable Shopify Payments to reduce transaction fees",
+    ],
+    etsy: [
+      "Use all 13 available tags with long-tail keyword phrases",
+      "Upload a short product video — Etsy surfaces video listings higher",
+      "Renew listings regularly to boost search ranking",
+    ],
+    amazon: [
+      "Use A+ content for enhanced product description with comparison tables",
+      "Target the Buy Box with competitive pricing and fast shipping",
+      "Collect reviews in the first 30 days to boost organic ranking",
+    ],
+    generic: [
+      "Ensure product images are at least 1500x1500px with white or neutral backgrounds",
+      "Write descriptions that address the customer's problem, not just product features",
+      "Add structured data markup for Google Shopping visibility",
+    ],
+  };
+  return tips[platform] || tips.generic;
+}
+
 // === HANDLERS (shared logic) ===
 
 async function handleToolCall(name: string, args: any): Promise<any> {
@@ -299,19 +325,72 @@ async function handleToolCall(name: string, args: any): Promise<any> {
     }
     case "optimize_listing": {
       const { product_name, current_description, platform, price, category } = args;
-      const maxTitleLen = platform === "etsy" ? 140 : 60;
-      let seoTitle = category ? `${product_name} | ${category}` : product_name;
-      if (seoTitle.length > maxTitleLen) seoTitle = seoTitle.substring(0, maxTitleLen - 3) + "...";
-      const words = product_name.toLowerCase().split(" ").filter((w: string) => w.length > 2);
-      const maxTags = platform === "etsy" ? 13 : 5;
-      const tags = [...new Set([...words, category].filter(Boolean))].slice(0, maxTags);
+      const lowerName = product_name.toLowerCase();
+      const lowerCat = (category || "").toLowerCase();
+      const AESTHETICS: Record<string, string[]> = {
+        "rice paper": ["japandi","wabi-sabi","zen","japanese minimalist"],
+        "japanese":   ["japandi","wabi-sabi","zen","japanese aesthetic"],
+        "nordic":     ["scandinavian","hygge","scandi minimalist","nordic style"],
+        "bamboo":     ["sustainable","eco-friendly","natural bamboo","japandi"],
+        "wooden":     ["natural wood","rustic modern","eco-friendly","wood decor"],
+        "linen":      ["natural fabric","organic texture","neutral aesthetic","sustainable"],
+        "marble":     ["luxury","premium marble","elegant","sophisticated decor"],
+        "vintage":    ["retro style","vintage aesthetic","antique-inspired","classic"],
+        "modern":     ["contemporary","sleek design","minimalist modern","clean lines"],
+        "rattan":     ["natural rattan","coastal","boho","wicker"],
+        "mushroom":   ["cottagecore","whimsical","nature-inspired","organic"],
+        "arc":        ["statement piece","designer look","curved floor lamp","sculptural"],
+        "gourd":      ["organic form","artisan","sculptural","unique shape"],
+      };
+      const CAT_CTX: Record<string, {rooms:string[]; marketRange:[number,number]}> = {
+        "lighting":   { rooms:["bedroom","living room","office","dining room"], marketRange:[35,189] },
+        "home decor": { rooms:["living room","bedroom","entryway","office"],   marketRange:[25,149] },
+        "furniture":  { rooms:["living room","bedroom","home office"],          marketRange:[89,599] },
+        "kitchen":    { rooms:["kitchen","dining","pantry"],                    marketRange:[15,89]  },
+        "art":        { rooms:["living room","bedroom","hallway"],              marketRange:[29,199] },
+      };
+      const aesthetics: string[] = [];
+      for (const [t, kws] of Object.entries(AESTHETICS)) { if (lowerName.includes(t)) aesthetics.push(...kws); }
+      let ctx = CAT_CTX["home decor"];
+      for (const [cat, c] of Object.entries(CAT_CTX)) { if (lowerCat.includes(cat) || lowerName.includes(cat)) { ctx = c; break; } }
+      const pa = aesthetics[0] ? aesthetics[0].charAt(0).toUpperCase() + aesthetics[0].slice(1) : "";
+      let optimizedTitle: string;
+      if (platform === "etsy") {
+        const roomList = ctx.rooms.slice(0,2).join(" ");
+        optimizedTitle = `${product_name}${aesthetics[0] ? " | " + aesthetics.slice(0,2).join(" ") : ""} | ${roomList || category || "Home Decor"} Gift`.substring(0, 140);
+      } else if (platform === "amazon") {
+        optimizedTitle = `${product_name}${pa ? ", " + pa + " Style" : ""}${ctx.rooms[0] ? " for " + ctx.rooms.slice(0,2).join(", ") : ""}`.substring(0, 200);
+      } else {
+        optimizedTitle = pa ? `${product_name} — ${pa} Style`.substring(0, 70) : product_name;
+      }
+      const stop = new Set(["the","and","for","with","from","your","this","that"]);
+      const tags = [...new Set([
+        ...lowerName.split(/\s+/).filter((w: string) => w.length > 3),
+        ...aesthetics.slice(0,4), ...ctx.rooms.slice(0,3),
+        ...(lowerCat ? [lowerCat] : []),
+      ])].filter((t: string) => !stop.has(t)).slice(0, platform === "etsy" ? 13 : 8);
+      const hook = aesthetics.length ? `Bring ${aesthetics[0]} elegance into your home with the ${product_name}.` : `Elevate your space with the ${product_name}.`;
+      const srcLines = (current_description||"").split(/[.\n]/).map((s:string)=>s.trim()).filter((s:string)=>s.length>15).slice(0,2);
+      const bullets = [
+        lowerName.includes("lamp")||lowerName.includes("light") ? "✦ Creates warm ambient lighting — ideal for bedrooms and reading nooks" : "✦ Thoughtfully crafted for everyday use",
+        pa ? `✦ ${pa} aesthetic — pairs beautifully with modern and natural interiors` : "✦ Versatile style that complements any room",
+        "✦ Ships from Canada — fast delivery, easy returns",
+      ].join("\n");
+      const optimizedDescription = [hook, "", srcLines.join(" "), "", bullets].filter(Boolean).join("\n").trim();
+      const [lo, hi] = ctx.marketRange;
+      const pricingNote = price ? {
+        current_price: price, market_range_cad: `$${lo}–$${hi}`,
+        suggested_test_price: price < (lo+hi)/2 ? Math.round((lo+hi)/2) : Math.round(price*1.1),
+        verdict: price < lo ? "Below market floor — raising price often improves perceived value." : price > hi ? "Above typical range — strong imagery required to justify premium." : "Within range — test 10–15% higher to find your price ceiling.",
+      } : null;
       return {
-        optimized_title: seoTitle,
-        optimized_description: `${product_name} — designed for modern living.\n\n${current_description}\n\nKey Features:\n- Premium quality materials\n- Free shipping across Canada\n- 30-day satisfaction guarantee`,
+        optimized_title: optimizedTitle,
+        optimized_description: optimizedDescription,
         seo_tags: tags,
-        meta_description: `${product_name}. ${current_description.substring(0, 120)}`.substring(0, 155),
-        pricing_suggestion: price ? { current_price: price, suggested_min: Math.round(price * 0.9 * 100) / 100, suggested_ideal: Math.round(price * 1.075 * 100) / 100, suggested_premium: Math.round(price * 1.25 * 100) / 100 } : null,
-        platform_tips: platform === "shopify" ? ["Use 4-5 product photos with alt text", "Set up abandoned cart recovery", "Enable Shopify Payments"] : ["Ensure images are 1500x1500px", "Write descriptions addressing pain points"],
+        meta_description: `${product_name}${aesthetics[0] ? " — " + aesthetics[0] + " style" : ""}. ${(current_description||"").substring(0,80)}.`.substring(0,155),
+        pricing_suggestion: pricingNote,
+        keywords_detected: aesthetics.slice(0,4),
+        platform_tips: getPlatformTips(platform),
       };
     }
     case "scan_competitor": {

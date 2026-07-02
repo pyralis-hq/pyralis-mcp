@@ -108,63 +108,138 @@ const TOOLS = [
 
 // === TOOL IMPLEMENTATIONS ===
 
+// Keyword expansion tables for optimize_listing
+const AESTHETIC_KEYWORDS: Record<string, string[]> = {
+  "rice paper":  ["japandi", "wabi-sabi", "zen", "japanese minimalist"],
+  "japanese":    ["japandi", "wabi-sabi", "zen", "japanese aesthetic"],
+  "nordic":      ["scandinavian", "hygge", "scandi minimalist", "nordic style"],
+  "bamboo":      ["sustainable", "eco-friendly", "natural bamboo", "japandi"],
+  "wooden":      ["natural wood", "rustic modern", "eco-friendly", "wood decor"],
+  "linen":       ["natural fabric", "organic texture", "neutral aesthetic", "sustainable"],
+  "marble":      ["luxury", "premium marble", "elegant", "sophisticated decor"],
+  "vintage":     ["retro style", "vintage aesthetic", "antique-inspired", "classic"],
+  "modern":      ["contemporary", "sleek design", "minimalist modern", "clean lines"],
+  "bohemian":    ["boho", "eclectic", "free-spirited", "boho chic"],
+  "rattan":      ["natural rattan", "coastal", "boho", "wicker"],
+  "ceramic":     ["handcrafted ceramic", "artisan", "handmade", "stoneware"],
+  "crystal":     ["crystal decor", "luxury", "sparkling", "elegant"],
+  "mushroom":    ["cottagecore", "whimsical", "nature-inspired", "organic"],
+  "arc":         ["statement piece", "designer look", "floor lamp arc", "curved"],
+  "gourd":       ["organic form", "artisan", "sculptural", "unique shape"],
+};
+
+const CATEGORY_CONTEXT: Record<string, { rooms: string[]; buyerIntent: string; marketRange: [number, number] }> = {
+  "lighting":    { rooms: ["bedroom", "living room", "office", "dining room"], buyerIntent: "ambient lighting home decor", marketRange: [35, 189] },
+  "home decor":  { rooms: ["living room", "bedroom", "entryway", "office"], buyerIntent: "aesthetic home decor", marketRange: [25, 149] },
+  "furniture":   { rooms: ["living room", "bedroom", "home office"], buyerIntent: "modern home furniture", marketRange: [89, 599] },
+  "kitchen":     { rooms: ["kitchen", "dining", "pantry"], buyerIntent: "kitchen accessories decor", marketRange: [15, 89] },
+  "art":         { rooms: ["living room", "bedroom", "hallway", "office"], buyerIntent: "wall art home decor", marketRange: [29, 199] },
+  "jewelry":     { rooms: [], buyerIntent: "handmade jewelry gift", marketRange: [18, 149] },
+  "clothing":    { rooms: [], buyerIntent: "fashion style outfit", marketRange: [25, 129] },
+};
+
 async function optimizeListing(args: any): Promise<any> {
   const { product_name, current_description, platform, price, category } = args;
+  const lowerName = product_name.toLowerCase();
+  const lowerCat  = (category || "").toLowerCase();
 
-  // SEO optimization logic
-  const cleanName = product_name.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
-  const words = cleanName.split(" ").filter((w: string) => w.length > 2);
-
-  // Generate SEO title (max 60 chars for Shopify, 140 for Etsy)
-  const maxTitleLen = platform === "etsy" ? 140 : 60;
-  let seoTitle = product_name;
-  if (category && seoTitle.length < maxTitleLen) {
-    seoTitle = `${product_name} | ${category}`;
-  }
-  if (seoTitle.length > maxTitleLen) {
-    seoTitle = seoTitle.substring(0, maxTitleLen - 3) + "...";
+  // 1. Detect aesthetic / style keywords from product name
+  const aesthetics: string[] = [];
+  for (const [term, kws] of Object.entries(AESTHETIC_KEYWORDS)) {
+    if (lowerName.includes(term)) aesthetics.push(...kws);
   }
 
-  // Generate tags (max 13 for Etsy, 3-5 for Shopify)
-  const maxTags = platform === "etsy" ? 13 : 5;
-  const stopWords = new Set(["the", "and", "for", "with", "from", "your", "this", "that"]);
-  const tagCandidates = words
-    .filter((w: string) => !stopWords.has(w))
-    .slice(0, maxTags);
-  const tags = [...new Set([...tagCandidates, category].filter(Boolean))];
+  // 2. Find category context
+  let ctx = CATEGORY_CONTEXT["home decor"]; // default
+  for (const [cat, c] of Object.entries(CATEGORY_CONTEXT)) {
+    if (lowerCat.includes(cat) || lowerName.includes(cat)) { ctx = c; break; }
+  }
 
-  // Generate optimized description
-  const optimizedDesc = [
-    `${product_name} — designed for modern living.`,
-    "",
-    current_description.split("\n")[0] || "",
-    "",
-    "Key Features:",
-    `- Premium quality materials`,
-    `- Free shipping across Canada`,
-    `- 30-day satisfaction guarantee`,
-    `- Ethically sourced`,
-  ].join("\n");
+  // 3. Build platform-specific optimized title
+  let optimizedTitle: string;
+  const primaryAesthetic = aesthetics[0] ? aesthetics[0].charAt(0).toUpperCase() + aesthetics[0].slice(1) : "";
 
-  // Pricing suggestion (simple heuristic)
-  let priceSuggestion = null;
+  if (platform === "etsy") {
+    // Etsy: keyword-dense, max 140 chars, buyer-search-phrase style
+    const roomList = ctx.rooms.slice(0, 2).join(" ");
+    const extras = aesthetics.slice(0, 2).join(" ");
+    optimizedTitle = `${product_name}${extras ? " | " + extras : ""} | ${roomList || category || "Home Decor"} Gift`.substring(0, 140);
+  } else if (platform === "amazon") {
+    // Amazon: functional + spec + room usage
+    const rooms = ctx.rooms.slice(0, 2).join(", ");
+    optimizedTitle = `${product_name}${primaryAesthetic ? ", " + primaryAesthetic + " Style" : ""}${rooms ? " for " + rooms : ""}`.substring(0, 200);
+  } else {
+    // Shopify / generic: clean, benefit-forward, 60–70 char sweet spot
+    optimizedTitle = primaryAesthetic
+      ? `${product_name} — ${primaryAesthetic} Style`.substring(0, 70)
+      : product_name;
+  }
+
+  // 4. Build SEO tags
+  const nameWords = lowerName.split(/\s+/).filter((w: string) => w.length > 3);
+  const allTagCandidates = [
+    ...nameWords,
+    ...aesthetics.slice(0, 4),
+    ...(ctx.rooms.slice(0, 3)),
+    ...(category ? [lowerCat] : []),
+    ctx.buyerIntent,
+  ];
+  const stop = new Set(["the", "and", "for", "with", "from", "your", "this", "that"]);
+  const tags = [...new Set(allTagCandidates)]
+    .filter((t: string) => t.length > 2 && !stop.has(t))
+    .slice(0, platform === "etsy" ? 13 : 8);
+
+  // 5. Build structured description
+  const hook = aesthetics.length
+    ? `Bring ${aesthetics[0]} elegance into your home with the ${product_name}.`
+    : `Elevate your space with the ${product_name}.`;
+
+  const sourceLines = (current_description || "")
+    .split(/[.\n]/)
+    .map((s: string) => s.trim())
+    .filter((s: string) => s.length > 15)
+    .slice(0, 2);
+
+  const bulletLines = [
+    lowerName.includes("lamp") || lowerName.includes("light")
+      ? "✦ Creates warm, ambient lighting — ideal for reading nooks and bedrooms"
+      : "✦ Handcrafted for everyday use",
+    aesthetics[0] ? `✦ ${primaryAesthetic} aesthetic — pairs with modern and natural interiors` : "✦ Versatile style that complements any room",
+    "✦ Ships from Canada — fast delivery, easy returns",
+  ];
+
+  const optimizedDescription = [
+    hook,
+    "",
+    sourceLines.join(" "),
+    "",
+    bulletLines.join("\n"),
+  ].filter(Boolean).join("\n").trim();
+
+  // 6. Pricing suggestion based on category market range
+  let pricingNote = null;
   if (price) {
-    const margin = platform === "etsy" ? 0.35 : 0.25;
-    priceSuggestion = {
+    const [lo, hi] = ctx.marketRange;
+    const mid = Math.round((lo + hi) / 2);
+    pricingNote = {
       current_price: price,
-      suggested_min: Math.round(price * 0.9 * 100) / 100,
-      suggested_ideal: Math.round(price * (1 + margin * 0.3) * 100) / 100,
-      suggested_premium: Math.round(price * (1 + margin) * 100) / 100,
-      note: `Based on ${platform} typical margins (${Math.round(margin * 100)}%), consider testing a premium price point.`,
+      market_range_cad: `$${lo}–$${hi}`,
+      suggested_test_price: price < mid ? mid : Math.round(price * 1.1),
+      verdict: price < lo
+        ? "Below market floor — raising price often improves conversion by signalling quality."
+        : price > hi
+          ? "Above typical range — strong imagery and reviews are essential to justify the premium."
+          : "Within range — test 10–15% higher to find your price ceiling.",
     };
   }
 
   return {
-    optimized_title: seoTitle,
-    optimized_description: optimizedDesc,
+    optimized_title: optimizedTitle,
+    optimized_description: optimizedDescription,
     seo_tags: tags,
-    meta_description: `${product_name}. ${current_description.substring(0, 120)}`.substring(0, 155),
-    pricing_suggestion: priceSuggestion,
+    meta_description: `${product_name}${aesthetics[0] ? " — " + aesthetics[0] + " style" : ""}. ${(current_description || "").substring(0, 80)}.`.substring(0, 155),
+    pricing_suggestion: pricingNote,
+    keywords_detected: aesthetics.slice(0, 4),
     platform_tips: getPlatformTips(platform),
   };
 }

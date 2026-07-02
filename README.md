@@ -34,7 +34,7 @@ Add to your `claude_desktop_config.json`:
 Or clone first:
 
 ```bash
-git clone https://github.com/sumedhtantry/pyralis-mcp.git
+git clone https://github.com/pyralis-hq/pyralis-mcp.git
 cd pyralis-mcp
 npm install
 ```
